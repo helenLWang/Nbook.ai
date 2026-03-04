@@ -1,0 +1,208 @@
+{% extends "dashboard/base_dashboard.html" %}
+{% block title %}Overview - Nbook.ai{% endblock %}
+{% block dashboard_title %}Today & calendar{% endblock %}
+{% block dashboard_content %}
+<div class="row mb-4">
+  <div class="col-md-4 mb-3 mb-md-0">
+    <div class="card text-center">
+      <div class="card-body py-3">
+        <div class="text-muted small">Today’s bookings</div>
+        <div class="fs-3 fw-bold">{{ today_count }}</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4 mb-3 mb-md-0">
+    <div class="card text-center">
+      <div class="card-body py-3">
+        <div class="text-muted small">Bookings this week</div>
+        <div class="fs-3 fw-bold">{{ week_count }}</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card text-center">
+      <div class="card-body py-3">
+        <div class="text-muted small">Pending quotes</div>
+        <div class="fs-3 fw-bold">{{ pending_quotes }}</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-12 mb-4">
+    <div class="card">
+      <div class="card-body">
+        <!-- Calendar header: view switch & navigation -->
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <div class="d-flex align-items-center gap-2">
+            <h5 class="card-title mb-0">Schedule</h5>
+            <div class="btn-group btn-group-sm" role="group">
+              <a href="{{ url_for('dashboard.overview', view='month', date=view_date.isoformat()) }}" 
+                 class="btn {% if view_type == 'month' %}btn-primary{% else %}btn-outline-primary{% endif %}">Month</a>
+              <a href="{{ url_for('dashboard.overview', view='week', date=view_date.isoformat()) }}" 
+                 class="btn {% if view_type == 'week' %}btn-primary{% else %}btn-outline-primary{% endif %}">Week</a>
+            </div>
+          </div>
+          <div class="d-flex align-items-center gap-2">
+            <a href="{{ url_for('dashboard.overview', view=view_type, date=prev_nav_date.isoformat()) }}" 
+               class="btn btn-sm btn-outline-secondary">‹ Prev {{ 'month' if view_type == 'month' else 'week' }}</a>
+            <span class="fw-bold">{{ view_date.strftime('%b %Y' if view_type == 'month' else '%b %d, %Y') }}</span>
+            <a href="{{ url_for('dashboard.overview', view=view_type, date=next_nav_date.isoformat()) }}" 
+               class="btn btn-sm btn-outline-secondary">Next {{ 'month' if view_type == 'month' else 'week' }} ›</a>
+            <a href="{{ url_for('dashboard.overview', view=view_type, date=today.isoformat()) }}" 
+               class="btn btn-sm btn-outline-primary">Today</a>
+          </div>
+        </div>
+
+        <!-- External booking form -->
+        <div class="mb-3 p-3 bg-light rounded">
+          <form class="row g-2 align-items-end" method="post" action="{{ url_for('dashboard.external_booking') }}" id="externalBookingForm">
+            <div class="col-md-2">
+              <label class="form-label form-label-sm mb-1">Date</label>
+              <input type="date" name="booking_date" class="form-control form-control-sm" value="{{ today.strftime('%Y-%m-%d') }}" required>
+            </div>
+            <div class="col-md-2">
+              <label class="form-label form-label-sm mb-1">Start</label>
+              <input type="time" name="start_time" class="form-control form-control-sm" value="10:00" required>
+            </div>
+            <div class="col-md-2">
+              <label class="form-label form-label-sm mb-1">End</label>
+              <input type="time" name="end_time" class="form-control form-control-sm" value="11:00" required>
+            </div>
+            <div class="col-md-2">
+              <label class="form-label form-label-sm mb-1">Client label</label>
+              <input type="text" name="client_name" class="form-control form-control-sm" placeholder="e.g. Instagram DM client">
+            </div>
+            <div class="col-md-2">
+              <label class="form-label form-label-sm mb-1">Note</label>
+              <input type="text" name="note" class="form-control form-control-sm" placeholder="e.g. returning client / offline walk-in">
+            </div>
+            <div class="col-md-2 text-end">
+              <button type="submit" class="btn btn-primary btn-sm w-100">Add external booking</button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Apple Calendar–style views -->
+        {% if view_type == 'month' %}
+          <!-- Month view -->
+          <div class="calendar-month-view">
+            <table class="table table-bordered mb-0" style="table-layout: fixed;">
+              <thead>
+                <tr>
+                  <th class="text-center text-muted small" style="width: 14.28%;">Mon</th>
+                  <th class="text-center text-muted small" style="width: 14.28%;">Tue</th>
+                  <th class="text-center text-muted small" style="width: 14.28%;">Wed</th>
+                  <th class="text-center text-muted small" style="width: 14.28%;">Thu</th>
+                  <th class="text-center text-muted small" style="width: 14.28%;">Fri</th>
+                  <th class="text-center text-muted small" style="width: 14.28%;">Sat</th>
+                  <th class="text-center text-muted small" style="width: 14.28%;">Sun</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for i in range(0, calendar_dates|length, 7) %}
+                  <tr>
+                    {% for j in range(7) %}
+                      {% set cell_index = i + j %}
+                      {% if cell_index < calendar_dates|length and calendar_dates[cell_index] %}
+                        {% set current_date = calendar_dates[cell_index] %}
+                        {% set day_bookings = bookings_by_date.get(current_date.isoformat(), []) %}
+                        <td class="calendar-day-cell {% if current_date == today %}bg-light border-primary{% endif %}" 
+                            style="height: 120px; vertical-align: top; padding: 4px;">
+                          <div class="d-flex justify-content-between align-items-start">
+                            <span class="fw-bold {% if current_date == today %}text-primary{% elif current_date < today %}text-muted{% else %}text-dark{% endif %}" 
+                                  style="font-size: 14px;">{{ current_date.day }}</span>
+                            {% if day_bookings|length > 0 %}
+                              <span class="badge bg-primary rounded-pill" style="font-size: 10px;">{{ day_bookings|length }}</span>
+                            {% endif %}
+                          </div>
+                          <div class="mt-1" style="max-height: 90px; overflow-y: auto;">
+                            {% for b in day_bookings[:3] %}
+                              <a href="{{ url_for('dashboard.booking_detail', order_no=b.order_no) }}" 
+                                 class="calendar-event-block mb-1 p-1 rounded text-decoration-none d-block" 
+                                 style="font-size: 11px; background-color: {% if b.client_notes and '[EXTERNAL]' in (b.client_notes or '') %}#6c757d{% elif b.is_custom %}#0dcaf0{% else %}#0d6efd{% endif %}; color: white; cursor: pointer;"
+                                 title="{{ b.start_time.strftime('%H:%M') }} - {{ b.end_time.strftime('%H:%M') }} {{ b.client_name or 'Unnamed' }} - Tap to view details">
+                                <div class="text-truncate">{{ b.start_time.strftime('%H:%M') }} {{ b.client_name or 'Unnamed' }}</div>
+                              </a>
+                            {% endfor %}
+                            {% if day_bookings|length > 3 %}
+                              <div class="text-muted small">+{{ day_bookings|length - 3 }} more</div>
+                            {% endif %}
+                          </div>
+                        </td>
+                      {% else %}
+                        <td class="bg-light" style="height: 120px;"></td>
+                      {% endif %}
+                    {% endfor %}
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <!-- Week view -->
+          <div class="calendar-week-view">
+            <table class="table table-bordered mb-0" style="table-layout: fixed;">
+              <thead>
+                <tr>
+                  <th style="width: 80px;" class="text-center text-muted small">Time</th>
+                  {% for week_day in week_dates %}
+                    <th class="text-center {% if week_day == today %}bg-light border-primary{% endif %}" style="width: calc((100% - 80px) / 7);">
+                      <div class="fw-bold {% if week_day == today %}text-primary{% endif %}">{{ week_day.strftime('%m/%d') }}</div>
+                      <div class="text-muted small">{{ ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][loop.index0] }}</div>
+                    </th>
+                  {% endfor %}
+                </tr>
+              </thead>
+              <tbody>
+                {% for hour in range(6, 23) %}
+                  <tr style="height: 60px;">
+                    <td class="text-center text-muted small align-middle" style="font-size: 12px;">{{ '%02d:00'|format(hour) }}</td>
+                    {% for week_day in week_dates %}
+                      {% set day_bookings = bookings_by_date.get(week_day.isoformat(), []) %}
+                      <td class="calendar-hour-cell {% if week_day == today %}bg-light{% endif %}" 
+                          style="position: relative; padding: 2px;">
+                        {% for b in day_bookings %}
+                          {% set b_start_hour = b.start_time.hour %}
+                          {% set b_start_min = b.start_time.minute %}
+                          {% set b_end_hour = b.end_time.hour %}
+                          {% set b_end_min = b.end_time.minute %}
+                          {% set b_start_total = b_start_hour * 60 + b_start_min %}
+                          {% set b_end_total = b_end_hour * 60 + b_end_min %}
+                          {% set hour_start_total = hour * 60 %}
+                          {% set hour_end_total = (hour + 1) * 60 %}
+                          {% if b_start_total < hour_end_total and b_end_total > hour_start_total %}
+                            {% set top_percent = ((b_start_total - hour_start_total) / 60) * 100 %}
+                            {% set height_percent = ((b_end_total - b_start_total) / 60) * 100 %}
+                            {% if height_percent > 100 %}
+                              {% set height_percent = 100 %}
+                            {% endif %}
+                            <a href="{{ url_for('dashboard.booking_detail', order_no=b.order_no) }}" 
+                               class="calendar-event-block-week position-absolute rounded p-1 text-decoration-none d-block" 
+                               style="top: {{ top_percent }}%; height: {{ height_percent }}%; 
+                                      background-color: {% if b.client_notes and '[EXTERNAL]' in (b.client_notes or '') %}#6c757d{% elif b.is_custom %}#0dcaf0{% else %}#0d6efd{% endif %}; 
+                                      color: white; font-size: 11px; z-index: 10; cursor: pointer; overflow: hidden;"
+                               title="{{ b.start_time.strftime('%H:%M') }} - {{ b.end_time.strftime('%H:%M') }} {{ b.client_name or 'Unnamed' }} - Tap to view details">
+                              <div class="fw-bold">{{ b.start_time.strftime('%H:%M') }}</div>
+                              <div class="text-truncate">{{ b.client_name or 'Unnamed' }}</div>
+                            </a>
+                          {% endif %}
+                        {% endfor %}
+                      </td>
+                    {% endfor %}
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+  {{ super() }}
+{% endblock %}

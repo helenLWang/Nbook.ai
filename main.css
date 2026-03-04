@@ -1,0 +1,286 @@
+/*
+  Nbook.ai café-inspired UI theme
+  Palette: soft blush pink, warm beige, cream, light gray, coffee brown, muted rose, accent pink
+*/
+
+:root {
+  --nb-bg-body: #fdf7f4;
+  --nb-bg-surface: #ffffff;
+  --nb-bg-soft: #f8ebe4;
+  --nb-bg-soft-alt: #f4e3da;
+  --nb-border-subtle: rgba(112, 72, 60, 0.10);
+
+  --nb-text-main: #4a2e2a;        /* coffee brown */
+  --nb-text-muted: #8a6c63;
+  --nb-heading: #a25b6a;          /* muted rose */
+
+  --nb-accent: #e46a8a;           /* primary pink */
+  --nb-accent-soft: rgba(228, 106, 138, 0.12);
+  --nb-accent-dark: #c35474;
+
+  --nb-radius-md: 0.9rem;
+  --nb-radius-lg: 1.2rem;
+  --nb-shadow-soft: 0 10px 30px rgba(0, 0, 0, 0.04);
+  --nb-shadow-subtle: 0 6px 18px rgba(0, 0, 0, 0.03);
+
+  --nb-font-main: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", "Segoe UI", sans-serif;
+}
+
+body {
+  background-color: var(--nb-bg-body);
+  color: var(--nb-text-main);
+  font-family: var(--nb-font-main);
+}
+
+.container,
+.container-sm,
+.container-md {
+  max-width: 960px;
+}
+
+/* Cards / surfaces */
+.card {
+  border-radius: var(--nb-radius-md);
+  border: 1px solid var(--nb-border-subtle);
+  box-shadow: var(--nb-shadow-subtle);
+  background-color: var(--nb-bg-surface);
+}
+
+.card-header {
+  border-bottom-color: rgba(112, 72, 60, 0.08);
+  background-color: rgba(248, 235, 228, 0.35);
+}
+
+.card-title,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  color: var(--nb-heading);
+  letter-spacing: 0.01em;
+}
+
+.text-muted {
+  color: var(--nb-text-muted) !important;
+}
+
+/* Buttons */
+.btn-primary {
+  background-color: var(--nb-accent);
+  border-color: var(--nb-accent);
+  color: #fff;
+  border-radius: 999px;
+  padding-inline: 1.4rem;
+  font-weight: 500;
+}
+
+.btn-primary:hover,
+.btn-primary:focus {
+  background-color: var(--nb-accent-dark);
+  border-color: var(--nb-accent-dark);
+}
+
+.btn-outline-primary {
+  border-radius: 999px;
+  border-color: var(--nb-accent);
+  color: var(--nb-accent);
+}
+
+.btn-outline-primary:hover,
+.btn-outline-primary:focus {
+  background-color: var(--nb-accent-soft);
+  border-color: var(--nb-accent-dark);
+  color: var(--nb-accent-dark);
+}
+
+.btn-link {
+  color: var(--nb-accent);
+}
+
+.btn-link:hover {
+  color: var(--nb-accent-dark);
+}
+
+/* Navbar */
+.navbar {
+  background-color: rgba(255, 249, 244, 0.9) !important;
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(112, 72, 60, 0.06);
+}
+
+.navbar-brand {
+  color: var(--nb-heading);
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  font-size: 0.9rem;
+}
+
+.navbar-brand span {
+  font-weight: 400;
+  font-size: 0.8rem;
+  color: var(--nb-text-muted);
+}
+
+/* Pills / tabs */
+.nav-tabs .nav-link,
+.nav-pills .nav-link {
+  border-radius: 999px;
+  border: none;
+  color: var(--nb-text-muted);
+}
+
+.nav-tabs .nav-link.active,
+.nav-pills .nav-link.active {
+  background-color: var(--nb-accent-soft);
+  color: var(--nb-accent-dark);
+}
+
+/* Forms */
+.form-control,
+.form-select {
+  border-radius: 999px;
+  border-color: rgba(112, 72, 60, 0.18);
+  padding-block: 0.55rem;
+}
+
+.form-control:focus,
+.form-select:focus {
+  border-color: var(--nb-accent);
+  box-shadow: 0 0 0 0.15rem rgba(228, 106, 138, 0.16);
+}
+
+textarea.form-control {
+  border-radius: 1rem;
+}
+
+.form-label {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--nb-text-muted);
+}
+
+.form-text {
+  font-size: 0.75rem;
+}
+
+/* Alerts */
+.alert {
+  border-radius: var(--nb-radius-md);
+  border-width: 1px;
+}
+
+.alert-success {
+  background-color: #f1faf4;
+  border-color: rgba(16, 185, 129, 0.25);
+  color: #166f4b;
+}
+
+.alert-danger {
+  background-color: #fff5f5;
+  border-color: rgba(239, 68, 68, 0.25);
+  color: #b91c1c;
+}
+
+/* Custom file input: hide native control visually, use branded button + label */
+.nb-file-hidden {
+  position: absolute;
+  width: 0.1px;
+  height: 0.1px;
+  opacity: 0;
+  overflow: hidden;
+  z-index: -1;
+}
+
+.nb-file-trigger {
+  border-radius: 999px;
+}
+
+.nb-file-label {
+  font-size: 0.8rem;
+}
+
+/* Calendar layout tweaks for mobile */
+.calendar-month-view table,
+.calendar-week-view table {
+  font-size: 0.8rem;
+}
+
+.calendar-day-cell {
+  border-radius: 0.8rem;
+}
+
+.calendar-event-block,
+.calendar-event-block-week {
+  border-radius: 0.6rem;
+}
+
+@media (max-width: 768px) {
+  .card {
+    border-radius: var(--nb-radius-lg);
+  }
+
+  .row > [class*="col-"] {
+    margin-bottom: 0.75rem;
+  }
+
+  .calendar-month-view table thead {
+    font-size: 0.7rem;
+  }
+}
+
+/* 四象限便签区域 */
+.quadrant-wrapper {
+  position: relative;
+  border-radius: 1rem;
+  border: 1px solid rgba(0,0,0,0.06);
+  padding: 0.75rem;
+}
+
+.quadrant-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 0.5rem;
+  position: relative;
+  min-height: 220px;
+}
+
+.quadrant-grid::before,
+.quadrant-grid::after {
+  content: "";
+  position: absolute;
+  background: rgba(0,0,0,0.06);
+  z-index: 0;
+}
+
+.quadrant-grid::before {
+  /* 垂直坐标轴 */
+  width: 1px;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-0.5px);
+}
+
+.quadrant-grid::after {
+  /* 水平坐标轴 */
+  height: 1px;
+  left: 0;
+  right: 0;
+  top: 50%;
+  transform: translateY(-0.5px);
+}
+
+.quadrant-cell {
+  position: relative;
+  z-index: 1;
+}
+
+.quadrant-cell textarea {
+  font-size: 0.8rem;
+}
+

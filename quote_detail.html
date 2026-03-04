@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% block title %}Quote {{ quote.order_no }} - Nbook.ai{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-8">
+    <h3 class="mb-3">Custom design quote</h3>
+    <div class="card mb-3">
+      <div class="card-body">
+        <div class="mb-2"><strong>Quote ID:</strong> {{ quote.order_no }}</div>
+        <div class="mb-2"><strong>Status:</strong>
+          {% if quote.status == 'pending' %}Pending{% elif quote.status == 'quoted' %}Quoted{% elif quote.status == 'converted' %}Booked{% else %}Expired{% endif %}
+        </div>
+        <div class="mb-2"><strong>Request details:</strong><br>{{ quote.client_notes or '(no description provided)' }}</div>
+        <div class="mb-2">
+          <strong>Add-ons:</strong>
+          {% if quote.needs_removal %}Removal{% endif %}
+          {% if quote.needs_builder %}{% if quote.needs_removal %} · {% endif %}Builder/extension{% endif %}
+          {% if not quote.needs_removal and not quote.needs_builder %}None{% endif %}
+        </div>
+
+        {% if quote.status == 'quoted' and quote.quoted_price %}
+          <hr>
+          <div class="mb-2"><strong>Quoted price:</strong> ¥{{ quote.quoted_price }}</div>
+          <div class="mb-2"><strong>Estimated duration:</strong> {{ quote.quoted_duration_minutes }} min</div>
+          <p class="text-muted small mb-2">
+            Please choose a date and time slot. Once you confirm, this time will be reserved for you.
+          </p>
+
+          <form method="post" action="{{ url_for('booking.book_from_quote', order_no=quote.order_no) }}" class="card card-body">
+            <div class="mb-3">
+              <label for="booking_date" class="form-label">Booking date</label>
+              <input type="date" name="booking_date" id="booking_date" class="form-control">
+            </div>
+            <div class="mb-3">
+              <label for="time_slot" class="form-label">Time slot</label>
+              <select name="time_slot" id="time_slot" class="form-select">
+                <option value="">Select a date to load available time slots</option>
+              </select>
+              <div class="form-text">The system uses the quoted duration and your nail artist’s calendar to generate valid options.</div>
+            </div>
+            <div class="mb-3">
+              <label for="client_name" class="form-label">Name (optional)</label>
+              <input type="text" name="client_name" id="client_name" class="form-control">
+            </div>
+            <div class="mb-3">
+              <label for="client_contact" class="form-label">Contact (optional)</label>
+              <input type="text" name="client_contact" id="client_contact" class="form-control">
+            </div>
+            <button type="submit" class="btn btn-primary w-100">Book with this quote</button>
+          </form>
+        {% elif quote.status == 'pending' %}
+          <p class="text-muted mb-0">Your nail artist is still reviewing your request. Please check back later for a quote.</p>
+        {% elif quote.status == 'expired' %}
+          <p class="text-danger mb-0">This quote has expired. Please submit a new request if you’d like to book.</p>
+        {% endif %}
+      </div>
+    </div>
+    <a class="btn btn-outline-secondary" href="{{ url_for('booking.booking_home') }}">Back to booking home</a>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+  {{ super() }}
+  {% if quote.status == 'quoted' and quote.quoted_price %}
+  <script>
+    const dateInput = document.getElementById('booking_date');
+    const slotSelect = document.getElementById('time_slot');
+    const slotsUrl = "{{ url_for('booking.available_slots') }}";
+    const serviceId = "{{ quote.quoted_service_type_id }}";
+    const duration = "{{ quote.quoted_duration_minutes }}";
+
+    async function loadQuoteSlots() {
+      if (!dateInput || !slotSelect || !serviceId) return;
+      const dateVal = dateInput.value;
+      if (!dateVal) return;
+      slotSelect.innerHTML = '<option value=\"\">Loading...</option>';
+      try {
+        const resp = await fetch(`${slotsUrl}?service_id=${serviceId}&date=${dateVal}&duration=${duration}`);
+        const data = await resp.json();
+        slotSelect.innerHTML = '';
+        if (!data.length) {
+          const opt = document.createElement('option');
+          opt.value = '';
+          opt.textContent = 'No available time slots for this date';
+          slotSelect.appendChild(opt);
+          return;
+        }
+        data.forEach(item => {
+          const opt = document.createElement('option');
+          opt.value = item.value;
+          opt.textContent = item.label;
+          slotSelect.appendChild(opt);
+        });
+      } catch (e) {
+        slotSelect.innerHTML = '';
+        const opt = document.createElement('option');
+        opt.value = '';
+        opt.textContent = 'Failed to load time slots. Please try again.';
+        slotSelect.appendChild(opt);
+      }
+    }
+
+    if (dateInput && slotSelect) {
+      dateInput.addEventListener('change', loadQuoteSlots);
+      window.addEventListener('load', () => {
+        const today = new Date();
+        const m = String(today.getMonth() + 1).padStart(2, '0');
+        const d = String(today.getDate()).padStart(2, '0');
+        dateInput.value = `${today.getFullYear()}-${m}-${d}`;
+        loadQuoteSlots();
+      });
+    }
+  </script>
+  {% endif %}
+{% endblock %}

@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Quotes - Nbook.ai{% endblock %}
+{% block content %}
+<h3 class="mb-3">Quotes</h3>
+<ul class="nav nav-pills mb-3">
+  <li class="nav-item">
+    <a class="nav-link {% if status == 'pending' %}active{% endif %}" href="{{ url_for('dashboard.quotes', status='pending') }}">Pending</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link {% if status == 'quoted' %}active{% endif %}" href="{{ url_for('dashboard.quotes', status='quoted') }}">Quoted</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link {% if status == 'converted' %}active{% endif %}" href="{{ url_for('dashboard.quotes', status='converted') }}">Booked</a>
+  </li>
+</ul>
+
+<table class="table table-sm align-middle">
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Status</th>
+      <th>Add-ons</th>
+      <th>Created at</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for q in quotes %}
+      <tr>
+        <td>{{ q.order_no }}</td>
+        <td>{{ q.status }}</td>
+        <td>
+          {% if q.needs_removal %}Removal{% endif %}
+          {% if q.needs_builder %}{% if q.needs_removal %} · {% endif %}Builder{% endif %}
+          {% if not q.needs_removal and not q.needs_builder %}None{% endif %}
+        </td>
+        <td>{{ q.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+        <td>
+          <a href="{{ url_for('dashboard.quote_detail', quote_id=q.id) }}" class="btn btn-sm btn-outline-primary">
+            {% if q.status == 'pending' %}Send quote{% else %}View{% endif %}
+          </a>
+        </td>
+      </tr>
+    {% else %}
+      <tr><td colspan="5" class="text-center text-muted">No quotes yet</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
+

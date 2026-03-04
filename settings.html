@@ -1,0 +1,147 @@
+{% extends "dashboard/base_dashboard.html" %}
+{% block title %}Studio settings - Nbook.ai{% endblock %}
+{% block dashboard_title %}Studio & schedule settings{% endblock %}
+{% block dashboard_content %}
+<form method="post">
+<div class="row">
+  <div class="col-lg-6 mb-4">
+    <div class="card">
+      <div class="card-body">
+        <h5 class="card-title">Studio profile</h5>
+          <div class="mb-3">
+            <label for="shop_name" class="form-label">Studio name</label>
+            <input type="text" id="shop_name" name="shop_name" class="form-control" value="{{ profile.shop_name or '' }}">
+          </div>
+          <div class="mb-3">
+            <label for="description" class="form-label">Short description</label>
+            <textarea id="description" name="description" rows="3" class="form-control">{{ profile.description or '' }}</textarea>
+          </div>
+          <div class="mb-3">
+            <label for="contact" class="form-label">Contact (WeChat / phone)</label>
+            <input type="text" id="contact" name="contact" class="form-control" value="{{ profile.contact or '' }}">
+          </div>
+          <hr>
+          <h6 class="mb-2">Standard services & pricing</h6>
+          <p class="text-muted small">Changes will affect estimated duration and price shown during booking and quoting.</p>
+          <table class="table table-sm align-middle">
+            <thead>
+              <tr>
+                <th>Service name</th>
+                <th>Duration (min)</th>
+                <th>Price</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for s in services %}
+                <tr>
+                  <td>{{ s.name }}</td>
+                  <td>
+                    <input type="number" class="form-control form-control-sm" name="service_{{ s.id }}_duration" value="{{ s.base_duration_minutes }}">
+                  </td>
+                  <td>
+                    <input type="number" class="form-control form-control-sm" name="service_{{ s.id }}_price" value="{{ s.base_price }}">
+                  </td>
+                </tr>
+              {% else %}
+                <tr><td colspan="3" class="text-muted text-center">No services yet</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+          <button type="submit" class="btn btn-primary">Save settings</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-6 mb-4">
+    <div class="card">
+      <div class="card-body">
+        <h5 class="card-title">Working hours / schedule</h5>
+        <p class="text-muted small mb-3">Edit your weekly availability and add multiple time ranges per day (e.g. morning + afternoon).</p>
+        <table class="table table-sm align-middle">
+          <thead>
+            <tr>
+              <th style="width: 80px;">Day</th>
+              <th>Time range</th>
+              <th style="width: 80px;">Active</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% set weekdays = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'] %}
+            {% for s in schedules %}
+              <tr>
+                <td>{{ weekdays[s.day_of_week] }}</td>
+                <td>
+                  <div class="d-flex gap-1">
+                    <input
+                      type="time"
+                      class="form-control form-control-sm"
+                      name="schedule_{{ s.id }}_start"
+                      value="{{ s.start_time.strftime('%H:%M') }}"
+                    >
+                    <span class="small text-muted">-</span>
+                    <input
+                      type="time"
+                      class="form-control form-control-sm"
+                      name="schedule_{{ s.id }}_end"
+                      value="{{ s.end_time.strftime('%H:%M') }}"
+                    >
+                  </div>
+                </td>
+                <td class="text-center">
+                  <input
+                    type="checkbox"
+                    name="schedule_{{ s.id }}_enabled"
+                    {% if s.enabled %}checked{% endif %}
+                  >
+                </td>
+              </tr>
+            {% else %}
+              <tr><td colspan="3" class="text-muted text-center">No working hours configured yet</td></tr>
+            {% endfor %}
+
+            <tr class="table-light">
+              <td>
+                <select name="new_schedule_day" class="form-select form-select-sm">
+                  <option value="">Add new time range (choose day)</option>
+                  <option value="0">Mon</option>
+                  <option value="1">Tue</option>
+                  <option value="2">Wed</option>
+                  <option value="3">Thu</option>
+                  <option value="4">Fri</option>
+                  <option value="5">Sat</option>
+                  <option value="6">Sun</option>
+                </select>
+              </td>
+              <td>
+                <div class="d-flex gap-1">
+                  <input
+                    type="time"
+                    class="form-control form-control-sm"
+                    name="new_schedule_start"
+                    value="10:00"
+                  >
+                  <span class="small text-muted">-</span>
+                  <input
+                    type="time"
+                    class="form-control form-control-sm"
+                    name="new_schedule_end"
+                    value="20:00"
+                  >
+                </div>
+              </td>
+              <td class="text-center">
+                <input type="checkbox" name="new_schedule_enabled" checked>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <p class="text-muted small mb-0">
+          Tip: ignore the last row if you don’t want to add a new slot; just edit the existing rows above.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+ </form>
+{% endblock %}
+

@@ -1,0 +1,204 @@
+{% extends "base.html" %}
+{% block title %}Book {{ artist.name or 'nail artist' }} - Nbook.ai{% endblock %}
+{% block content %}
+<div class="row">
+  <div class="col-lg-7 mb-4">
+    <h3 class="mb-3">Book a standard service</h3>
+    <p class="text-muted">Pick a service, choose a time, and confirm your appointment in one step.</p>
+    <div class="list-group mb-3">
+      {% for s in services %}
+        <div class="list-group-item d-flex justify-content-between align-items-center">
+          <div>
+            <div class="fw-semibold">{{ s.name }}</div>
+            <div class="text-muted small">{{ s.base_duration_minutes }} min</div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+
+    <form method="post" action="{{ url_for('booking.standard_booking') }}" class="card card-body" enctype="multipart/form-data">
+      {{ form.hidden_tag() }}
+      <div class="mb-3">
+        {{ form.service_type_id.label(class="form-label") }}
+        {{ form.service_type_id(class="form-select", id="service_type_id") }}
+      </div>
+      <div class="mb-3">
+        {{ form.booking_date.label(class="form-label") }}
+        {{ form.booking_date(class="form-control", id="booking_date") }}
+      </div>
+      <div class="mb-3">
+        {{ form.time_slot.label(class="form-label") }}
+        {{ form.time_slot(class="form-select", id="time_slot") }}
+        <div class="form-text">Only time slots that fit your nail artist’s schedule will be shown.</div>
+      </div>
+      <div class="mb-3 form-check">
+        {{ form.needs_removal(class="form-check-input") }}
+        {{ form.needs_removal.label(class="form-check-label") }}
+      </div>
+      <div class="mb-3 form-check">
+        {{ form.needs_builder(class="form-check-input") }}
+        {{ form.needs_builder.label(class="form-check-label") }}
+      </div>
+      <div class="mb-3">
+        {{ form.client_name.label(class="form-label") }}
+        {{ form.client_name(class="form-control") }}
+      </div>
+      <div class="mb-3">
+        {{ form.client_contact.label(class="form-label") }}
+        {{ form.client_contact(class="form-control") }}
+      </div>
+      <div class="mb-3">
+        {{ form.client_notes.label(class="form-label") }}
+        {{ form.client_notes(class="form-control", rows=2) }}
+      </div>
+      <div class="mb-3">
+        <label for="booking_images" class="form-label">Upload reference photos (optional)</label>
+        <div class="d-flex align-items-center gap-2 mb-1">
+          <button type="button" class="btn btn-outline-primary btn-sm nb-file-trigger" data-target-input="booking_images">Choose files</button>
+          <span class="text-muted small nb-file-label" data-target-input="booking_images">No files selected</span>
+        </div>
+        <input type="file" id="booking_images" name="booking_images" class="nb-file-hidden" accept="image/*" multiple>
+        <div class="form-text">Share up to 9 inspiration photos so your nail artist knows what you like.</div>
+      </div>
+      {{ form.submit(class="btn btn-primary") }}
+      <a href="{{ url_for('booking.my_orders') }}" class="btn btn-link btn-sm mt-2 px-0">View my orders</a>
+    </form>
+  </div>
+
+  <div class="col-lg-5">
+    <h3 class="mb-3">Custom design – request a quote first</h3>
+    <p class="text-muted">
+      Upload inspiration photos and describe your idea. Your nail artist will send you a custom quote with time and price.
+    </p>
+    <form method="post" action="{{ url_for('booking.custom_quote') }}" class="card card-body" enctype="multipart/form-data">
+      {{ quote_form.hidden_tag() }}
+      <div class="mb-3">
+        <label for="quote_images" class="form-label">Upload reference photos (up to 9)</label>
+        <div class="d-flex align-items-center gap-2 mb-1">
+          <button type="button" class="btn btn-outline-primary btn-sm nb-file-trigger" data-target-input="quote_images">Choose files</button>
+          <span class="text-muted small nb-file-label" data-target-input="quote_images">No files selected</span>
+        </div>
+        <input type="file" id="quote_images" name="images" class="nb-file-hidden" accept="image/*" multiple>
+        <div class="form-text">You can upload style references, inspiration, or previous sets.</div>
+      </div>
+      <div class="mb-3">
+        {{ quote_form.client_notes.label(class="form-label") }}
+        {{ quote_form.client_notes(class="form-control", rows=4) }}
+        <div class="form-text">
+          Describe colors, length, special details, budget, or anything else you care about.
+        </div>
+      </div>
+      <div class="mb-3 form-check">
+        {{ quote_form.needs_removal(class="form-check-input") }}
+        {{ quote_form.needs_removal.label(class="form-check-label") }}
+      </div>
+      <div class="mb-3 form-check">
+        {{ quote_form.needs_builder(class="form-check-input") }}
+        {{ quote_form.needs_builder.label(class="form-check-label") }}
+      </div>
+      {{ quote_form.submit(class="btn btn-outline-primary w-100") }}
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+  {{ super() }}
+  <script>
+    const serviceSelect = document.getElementById('service_type_id');
+    const dateInput = document.getElementById('booking_date');
+    const slotSelect = document.getElementById('time_slot');
+    const needsRemovalCheckbox = document.getElementById('needs_removal');
+    const needsBuilderCheckbox = document.getElementById('needs_builder');
+    const slotsUrl = "{{ url_for('booking.available_slots') }}";
+
+    async function loadSlots() {
+      if (!serviceSelect || !dateInput || !slotSelect) return;
+      const serviceId = serviceSelect.value;
+      const dateVal = dateInput.value;
+      if (!serviceId || !dateVal) return;
+
+      // Get add-ons (removal / builder) to adjust duration
+      const needsRemoval = needsRemovalCheckbox ? needsRemovalCheckbox.checked : false;
+      const needsBuilder = needsBuilderCheckbox ? needsBuilderCheckbox.checked : false;
+
+      slotSelect.innerHTML = '<option value=\"\">Loading available time slots...</option>';
+      try {
+        const url = `${slotsUrl}?service_id=${serviceId}&date=${dateVal}&needs_removal=${needsRemoval}&needs_builder=${needsBuilder}`;
+        const resp = await fetch(url);
+        const data = await resp.json();
+        slotSelect.innerHTML = '';
+        if (!data.length) {
+          const opt = document.createElement('option');
+          opt.value = '';
+          opt.textContent = 'No available time slots for this date';
+          slotSelect.appendChild(opt);
+          return;
+        }
+        data.forEach(item => {
+          const opt = document.createElement('option');
+          opt.value = item.value;
+          opt.textContent = item.label;
+          slotSelect.appendChild(opt);
+        });
+      } catch (e) {
+        slotSelect.innerHTML = '';
+        const opt = document.createElement('option');
+        opt.value = '';
+        opt.textContent = 'Failed to load time slots. Please try again.';
+        slotSelect.appendChild(opt);
+      }
+    }
+
+    if (serviceSelect && dateInput) {
+      serviceSelect.addEventListener('change', loadSlots);
+      dateInput.addEventListener('change', loadSlots);
+      // Reload slots when add-ons change
+      if (needsRemovalCheckbox) {
+        needsRemovalCheckbox.addEventListener('change', loadSlots);
+      }
+      if (needsBuilderCheckbox) {
+        needsBuilderCheckbox.addEventListener('change', loadSlots);
+      }
+      window.addEventListener('load', () => {
+        if (!dateInput.value) {
+          const today = new Date();
+          const m = String(today.getMonth() + 1).padStart(2, '0');
+          const d = String(today.getDate()).padStart(2, '0');
+          dateInput.value = `${today.getFullYear()}-${m}-${d}`;
+        }
+        loadSlots();
+      });
+    }
+
+    // Custom file inputs: trigger hidden input and show selected file names/count
+    function setupFileInputs() {
+      document.querySelectorAll('.nb-file-trigger').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const targetId = btn.getAttribute('data-target-input');
+          const input = document.getElementById(targetId);
+          if (input) {
+            input.click();
+          }
+        });
+      });
+
+      document.querySelectorAll('.nb-file-hidden').forEach(input => {
+        input.addEventListener('change', () => {
+          const id = input.id;
+          const label = document.querySelector(`.nb-file-label[data-target-input="${id}"]`);
+          if (!label) return;
+          if (!input.files || input.files.length === 0) {
+            label.textContent = 'No files selected';
+          } else if (input.files.length === 1) {
+            label.textContent = input.files[0].name;
+          } else {
+            label.textContent = `${input.files.length} files selected`;
+          }
+        });
+      });
+    }
+
+    window.addEventListener('load', setupFileInputs);
+  </script>
+{% endblock %}
